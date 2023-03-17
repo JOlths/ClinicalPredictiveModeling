@@ -78,3 +78,49 @@ new_data.76 <- data.frame(female=as.factor(0), comorbidity=as.factor(2), rr=35, 
 new_data.76
 
 stats::predict.glm(glm.covidpredict, new_data.76, type = 'response')
+
+## Assignment 6 ####
+# Depends on factors such as IC beds, but a mortality rate of 20% seems like a reasonable cut-off
+
+## Assignment 7 ####
+# Cons are: different population, different healthcare system. So a model specific for the Netherlands would be better, 
+# but if there is no other this one could function.
+
+## Assignment 8 ####
+library(rms)
+#define model
+model_rms <- rms::lrm(data = covidpredict.training, formula = mortality ~ age,
+                      x = T, y = T)
+
+model_rms
+## Assignment 9 ####
+# Restricted cubic spline (?)
+model_rms.2 <- lrm(data=covidpredict.training, formula = mortality ~ rcs(age,3))
+model_rms.2
+
+#interaction
+model_rms.3 <- lrm(data = covidpredict.training, formula = mortality ~ age*comorbidity,
+                   x=T, y=T)
+model_rms.3
+
+#custom model
+model_rms.4 <- lrm(data = covidpredict.training, 
+                   formula = mortality ~ rcs(oxygen_sat,3) + rcs(rr, 3) + rcs(urea, 3) + rcs(crp, 3) + age + comorbidity + age + female + gcs + age*comorbidity,
+                   x=T, y=T)
+
+#example code for visualizing non-linear effects
+p<-Predict(model_rms.4, age=seq(18:100), female=as.factor(0), comorbidity = c(as.factor(0),as.factor(1), as.factor(2)), 
+           rr=20, oxygen_sat=94, gcs=15, urea=7, crp=84.9)
+ggplot(p)
+
+p<-Predict(model_rms.4, age=seq(18:100), female=as.factor(0), comorbidity = c(as.factor(0),as.factor(1), as.factor(2)), 
+           rr=20, oxygen_sat=94, gcs=15, urea=7, crp=84.9, fun=plogis)
+ggplot(p) 
+
+p <- Predict(model_rms.4, age=80, female=as.factor(0), comorbidity=as.factor(0), rr=20, oxygen_sat=94,
+             gcs=15, urea=seq(2:59), crp=84.9, fun=plogis) 
+ggplot(p)
+
+p <- Predict(model_rms.4, age=80, female=as.factor(0), comorbidity=as.factor(0), rr=20, oxygen_sat=94,
+             gcs=15, urea=7, crp=seq(0:584), fun=plogis)
+ggplot(p)
