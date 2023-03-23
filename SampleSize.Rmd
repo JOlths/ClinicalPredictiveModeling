@@ -1,0 +1,32 @@
+---
+title: "SampleSize"
+author: "Jasper Olthuis"
+date: "23-3-2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Packages}
+list.to.install <- c('caret', 'pmsampsize', 'ggplot2')
+lapply(list.to.install, require, character.only=T)
+```
+
+
+## Sample Size Calculation Predictive Model
+Sample size calculations for predictive models can be found in [this paper](https://www.bmj.com/content/bmj/368/bmj.m441.full.pdf). Calculations for binary outcome variables are used. The R package [pmsampsize](https://cran.r-project.org/web/packages/pmsampsize/index.html) provides most of the calculations and [this website](https://mvansmeden.shinyapps.io/BeyondEPV/) provides one that is not availabele in the package.
+
+```{r pmsampsize}
+pmsampsize::pmsampsize(
+  type = 'b', #binary outcome variable
+  parameters = 16,
+  shrinkage = 0.9, #recommendation,
+  prevalence = 0.327, #prevalence in dataset
+  seed = 1330,
+  cstatistic = 0.90 #AUC for LR1 (is around 0.95, however we're being cautious)
+)
+```
+The approximation for the required sample size gives a minimal sample size of $339$ individuals. Considering the low C-statistic, we are being quite cautious. Since our sample size is ~$1000$ individuals, this should be fine.
+
