@@ -46,13 +46,13 @@ model <- glm(mal ~ Age + Ascites + papflow + lesdmax + soldmaxorig + wallreg
              + CA125 + nrloculescat + papnr + oncocenter, data = data, family = binomial)
 summary(model)
 
-### 2st step: omit lesdmax
+### 2nd step: omit lesdmax
 model <- glm(mal ~ Age + Ascites + papflow  + soldmaxorig + wallreg 
              + Shadows + famhistovca + pershistovca  + pain + colscore 
              + CA125 + nrloculescat + papnr + oncocenter, data = data, family = binomial)
 summary(model)
 
-### 2st step: omit papnr
+### 3rd step: omit papnr
 model <- glm(mal ~ Age + Ascites + papflow  + soldmaxorig + wallreg 
              + Shadows + famhistovca + pershistovca  + pain + colscore 
              + CA125 + nrloculescat + oncocenter, data = data, family = binomial)
