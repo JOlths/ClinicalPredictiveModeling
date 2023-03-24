@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r Packages}
+```{r Packages, message=F, warning=F}
 list.to.install <- c('caret', 'pmsampsize', 'ggplot2')
 lapply(list.to.install, require, character.only=T)
 ```
