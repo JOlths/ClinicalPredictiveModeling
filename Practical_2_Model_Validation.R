@@ -71,5 +71,6 @@ dca <- rmda::decision_curve(data = covidpredict.test,
                             fitted.risk = T)
 rmda::plot_decision_curve(dca)
 
-summary(dca, measure="TPR")
+s <- summary(dca, measure="TPR")
+s$
 summary(dca, measure="FPR")

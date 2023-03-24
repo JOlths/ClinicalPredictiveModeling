@@ -29,4 +29,3 @@ pmsampsize::pmsampsize(
 )
 ```
 The approximation for the required sample size gives a minimal sample size of $339$ individuals. Considering the low C-statistic, we are being quite cautious. Since our sample size is ~$1000$ individuals, this should be fine.
-
