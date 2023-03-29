@@ -1,0 +1,78 @@
+---
+title: "DecisionTree"
+author: "Jasper Olthuis"
+date: "29-3-2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages, message=F}
+list.of.packages <- c('ggplot2', 'caret', 'magrittr', 'dplyr')
+lapply(list.of.packages, require, character.only=T)
+```
+
+```{r dataset}
+data <- read.delim("ovarian.txt")
+```
+
+## Pre-processing
+```{r datatypes}
+#change to appropriate datatype
+data$Ascites %<>% as.factor()
+data$papflow %<>% as.factor()
+data$wallreg %<>% as.factor()
+data$Shadows %<>% as.factor()
+data$pershistovca %<>% as.factor()
+data$famhistovca <- as.factor(ifelse(data$famhistovca == 0, 0, ifelse(data$famhistovca == 1, 1, 2)))
+
+data$hormtherapy %<>% as.factor()
+data$pain %<>% as.factor()
+data$colscore %<>% as.factor()
+data$nrloculescat %<>% as.factor()
+data$papnr %<>% as.factor()
+data$oncocenter %<>% as.factor()
+data$mal %<>% as.factor()
+```
+
+
+```{r summary}
+summary(data)
+```
+
+## Splittin dataset
+```{r splitting}
+trainIndex <- caret::createDataPartition(data$mal,
+                                         p=0.8,
+                                         list=F,
+                                         times=1)
+data_train <- data[trainIndex,]
+data_test <- data[-trainIndex,]
+```
+
+## Make tree model
+```{r DecisionTree}
+tree.ovarian <- tree::tree(data = data_train, 
+                           formula = mal ~ .,)
+summary(tree.ovarian)
+```
+
+```{r}
+plot(tree.ovarian)
+text(tree.ovarian, pretty=0)
+```
+
+## Test tree model
+```{r accuracy}
+tree.pred <- stats::predict(tree.ovarian,
+                            select(data_test, -mal),
+                            type = 'class')
+```
+
+```{r contingency table}
+table(tree.pred, data_test$mal)
+```
+
+
