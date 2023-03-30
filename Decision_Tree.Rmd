@@ -9,8 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r packages, message=F}
-list.of.packages <- c('ggplot2', 'caret', 'magrittr', 'dplyr')
+```{r packages, message=F, comment='hide'}
+list.of.packages <- c('ggplot2', 'caret', 'magrittr', 'dplyr', 'rpart.plot')
 lapply(list.of.packages, require, character.only=T)
 ```
 
@@ -34,9 +34,12 @@ data$colscore %<>% as.factor()
 data$nrloculescat %<>% as.factor()
 data$papnr %<>% as.factor()
 data$oncocenter %<>% as.factor()
-data$mal %<>% as.factor()
+data$mal %<>% factor(., levels = c(0,1), labels = c("Benign", "Malign"))
 ```
 
+```{r}
+summary(data$mal)
+```
 
 ```{r summary}
 summary(data)
@@ -54,25 +57,98 @@ data_test <- data[-trainIndex,]
 
 ## Make tree model
 ```{r DecisionTree}
-tree.ovarian <- tree::tree(data = data_train, 
-                           formula = mal ~ .,)
-summary(tree.ovarian)
+#tree.ovarian <- tree::tree(data = data_train, 
+                           #formula = mal ~ .,)
+#summary(tree.ovarian)
+
+trainControl <- trainControl(
+  method = "repeatedcv", #repeated internal cross-validation
+  number = 10, #10-fold cross-validation **HYPERPARAMETER
+  repeats = 10, #10 repeats of each fold **HYPERPARAMETER
+  #search = "random",
+  summaryFunction = twoClassSummary,
+  classProbs=TRUE
+  )
+
+
+model_rpart <- caret::train(
+  mal ~ .,
+  method = 'rpart',
+  data = data_train,
+  trControl = trainControl,
+  metric = 'ROC'
+)
+
+
 ```
 
-```{r}
-plot(tree.ovarian)
-text(tree.ovarian, pretty=0)
+```{r Decisiontree: plot}
+rpart.plot::rpart.plot(model_rpart$finalModel)
 ```
 
 ## Test tree model
-```{r accuracy}
-tree.pred <- stats::predict(tree.ovarian,
-                            select(data_test, -mal),
-                            type = 'class')
+```{r}
+probabilitiesSelf <- predict(model_rpart, data_train, type="prob")
+myroc <- pROC::roc(predictor = probabilitiesSelf$Malign,
+             response = data_train$mal,
+             levels = c("Benign","Malign"), smooth=F)
+
+probabilitiesTest <- predict(model_rpart, data_test, type="prob")
+testroc <- pROC::roc(predictor = probabilitiesTest$Malign,
+             response = data_test$mal,
+             levels = c("Benign","Malign"), smooth=F)
 ```
 
-```{r contingency table}
-table(tree.pred, data_test$mal)
+```{r}
+pROC::plot.roc(myroc, legacy.axes = T, print.auc = T, col="green", print.thres = "best")
+pROC::plot.roc(testroc, legacy.axes = T, print.auc = T, col="red")
 ```
 
+## Random Forrest Model
+
+```{r}
+trainControl <- trainControl(
+  method = "repeatedcv", #repeated internal cross-validation
+  number = 10, #10-fold cross-validation
+  repeats = 10, #10 repeats of each fold
+  #search = "random",
+  summaryFunction = twoClassSummary,
+  classProbs=TRUE,
+  allowParallel=TRUE
+  )
+
+tgControl <- expand.grid(
+  .mtry = 5 #**HYPERPARAMETER
+)
+
+model_forest <- train(
+  mal ~ . , 
+  data = data_train,
+  method = "rf",
+  trControl = trainControl,
+  #verbose = FALSE,
+  #tuneLength = 5
+  metric = "ROC",
+  tuneGrid = tgControl,
+  num.trees = 2000 #**HYPERPARAMETER
+)
+
+model_forest
+```
+
+```{r}
+probabilitiesSelf <- predict(model_forest, data_train, type="prob")
+myroc <- pROC::roc(predictor = probabilitiesSelf$Malign,
+             response = data_train$mal,
+             levels = c("Benign","Malign"), smooth=F)
+
+probabilitiesTest <- predict(model_forest, data_test, type="prob")
+testroc <- pROC::roc(predictor = probabilitiesTest$Malign,
+             response = data_test$mal,
+             levels = c("Benign","Malign"), smooth=F)
+
+par(mfrow=c(1,2))
+pROC::plot.roc(myroc, legacy.axes = T, print.auc = T, col="green", print.thres = "best")
+pROC::plot.roc(testroc, legacy.axes = T, print.auc = T, col="red", print.thres = "best")
+```
 
