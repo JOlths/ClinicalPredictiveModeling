@@ -118,7 +118,7 @@ trainControl <- trainControl(
   )
 
 tgControl <- expand.grid(
-  .mtry = 5 #**HYPERPARAMETER
+  .mtry = 4 #**HYPERPARAMETER sqrt of 16 variables!
 )
 
 model_forest <- train(
@@ -130,11 +130,15 @@ model_forest <- train(
   #tuneLength = 5
   metric = "ROC",
   tuneGrid = tgControl,
-  num.trees = 2000 #**HYPERPARAMETER
+  num.trees = 1000 #**HYPERPARAMETER
 )
 
 model_forest
 ```
+```{r}
+plot(caret::varImp(model_forest))
+```
+
 
 ```{r}
 probabilitiesSelf <- predict(model_forest, data_train, type="prob")
