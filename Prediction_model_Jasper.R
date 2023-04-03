@@ -23,18 +23,59 @@ data$colscore %<>% as.factor()
 data$nrloculescat %<>% as.factor()
 data$papnr %<>% as.factor()
 data$oncocenter %<>% as.factor()
-data$mal %<>% as.factor()
+data$mal %<>% factor(., levels = c(0,1), labels = c("Benign", "Malign"))
 
-## Model building ####
-lg_model.1 <- rms::lrm(
-  data = data,
-  formula = mal ~ .,
-  x = T, y = T
+#remove CA125
+data %<>% select(., -CA125)
+
+#sample test dataset
+n <- sample(1:nrow(data), size=1000, replace = T)
+
+data_test <- data[n,]
+test_labels <- data_test$mal
+test_labels
+
+
+#set seed
+set.seed(23)
+
+#Random Forest
+trainControl <- caret::trainControl(
+  method = "repeatedcv", #repeated internal cross-validation
+  number = 10, #10-fold cross-validation
+  repeats = 10, #10 repeats of each fold
+  #search = "random",
+  summaryFunction = twoClassSummary,
+  classProbs=TRUE,
+  allowParallel=TRUE,
+  savePredictions = T
 )
 
-lg_model.1
+tgControl <- expand.grid(
+  mtry = 4 #**HYPERPARAMETER sqrt of 15 variables!
+  #num.trees = c(1000, 1500, 2000)
+)
 
-#validate
-tab <- rms::validate(lg_model.1, method = 'boot', B=40)
-C_stat <- function(Dxy) {return(0.5*(Dxy+1))}
-sapply(tab[1,], C_stat)
+tgControl
+
+model_forest <- train(
+  mal ~ . , 
+  data = data,
+  method = "rf",
+  trControl = trainControl,
+  verbose = T,
+  #tuneLength = 5
+  metric = "ROC",
+  tuneGrid = tgControl,
+  num.trees = 10 #**HYPERPARAMETER,
+)
+
+model_forest
+
+library(MLeval)
+x <- MLeval::evalm(model_forest, plots = T)
+
+x
+
+#Variable Importance
+plot(caret::varImp(model_forest))
